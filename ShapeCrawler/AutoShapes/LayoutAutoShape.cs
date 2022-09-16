@@ -115,5 +115,10 @@ namespace ShapeCrawler
         {
             throw new NotImplementedException();
         }
+
+        public void SetShapeFillToSolidColor(string hexColorValue)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
