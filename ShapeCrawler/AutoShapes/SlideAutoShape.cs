@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using DocumentFormat.OpenXml.Drawing;
 using ShapeCrawler.AutoShapes;
 using ShapeCrawler.Drawing;
 using ShapeCrawler.Shapes;
@@ -17,12 +18,15 @@ namespace ShapeCrawler
     {
         private readonly Lazy<ShapeFill> shapeFill;
         private readonly Lazy<SCTextBox?> textBox;
+        private readonly P.Shape pShape;
+
 
         internal SlideAutoShape(P.Shape pShape, SCSlide slideInternal, SlideGroupShape groupShape)
             : base(pShape, slideInternal, groupShape)
         {
             this.textBox = new Lazy<SCTextBox?>(this.GetTextBox);
             this.shapeFill = new Lazy<ShapeFill>(this.GetFill);
+            this.pShape = pShape;
         }
 
         #region Public Properties
@@ -36,6 +40,16 @@ namespace ShapeCrawler
         public ShapeType ShapeType => ShapeType.AutoShape;
 
         #endregion Public Properties
+
+        public void SetShapeFillToSolidColor(string hexColorValue)
+        {
+            SolidFill solidFill = this.pShape.ShapeProperties.GetFirstChild<A.SolidFill>();
+            if (solidFill != null)
+            {
+                solidFill.RgbColorModelHex = new RgbColorModelHex();
+                solidFill.RgbColorModelHex.Val = hexColorValue;
+            }
+        }
 
         private SCTextBox GetTextBox()
         {

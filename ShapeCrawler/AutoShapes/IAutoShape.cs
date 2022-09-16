@@ -19,5 +19,7 @@ namespace ShapeCrawler
         ///     Gets text box.
         /// </summary>
         ITextBox TextBox { get; }
+
+        void SetShapeFillToSolidColor(string hexColorValue);
     }
 }
