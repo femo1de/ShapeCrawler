@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using DocumentFormat.OpenXml.Packaging;
 using ShapeCrawler.AutoShapes;
@@ -8,7 +7,7 @@ using ShapeCrawler.SlideMasters;
 namespace ShapeCrawler
 {
     /// <summary>
-    ///     Represents a user slide.
+    ///     Represents a slide.
     /// </summary>
     public interface ISlide
     {
@@ -18,9 +17,9 @@ namespace ShapeCrawler
         int Number { get; set; }
 
         /// <summary>
-        ///     Gets background image of the slide. Returns <c>NULL</c> if the slide does not have background.
+        ///     Gets background image of the slide. Returns <c>NULL</c> if slide does not have background.
         /// </summary>
-        SCImage Background { get; }
+        SCImage? Background { get; }
 
         /// <summary>
         ///     Gets or sets custom data.
@@ -28,40 +27,39 @@ namespace ShapeCrawler
         string CustomData { get; set; }
 
         /// <summary>
-        ///     Gets a value indicating whether slide hidden.
+        ///     Gets a value indicating whether the slide is hidden.
         /// </summary>
         bool Hidden { get; }
 
         /// <summary>
-        ///     Gets parent (referenced) Slide Layout.
+        ///     Gets referenced Slide Layout.
         /// </summary>
         ISlideLayout SlideLayout { get; }
 
-        IPresentation ParentPresentation { get; }
+        /// <summary>
+        ///     Gets presentation.
+        /// </summary>
+        IPresentation Presentation { get; }
 
+        /// <summary>
+        ///     Gets instance of <see cref=" DocumentFormat.OpenXml.Packaging.SlidePart"/> class of the underlying Open XML SDK.
+        /// </summary>
         SlidePart SDKSlidePart { get; }
         
+        /// <summary>
+        ///     Gets collection of shapes.
+        /// </summary>
         IShapeCollection Shapes { get; }
 
         /// <summary>
-        /// Gets a list of all textboxes on that slide, including those in tables
+        /// Gets a list of all textboxes on that slide, including those in tables.
         /// </summary>
-        public IList<ITextBox> Textboxes { get; }
+        public IList<ITextFrame> GetAllTextFrames();
 
         /// <summary>
         ///     Hides slide.
         /// </summary>
         void Hide();
-
-        /// <summary>
-        ///     Saves slide scheme to stream.
-        /// </summary>
-        void SaveScheme(Stream stream);
-
-        /// <summary>
-        ///     Saves slide scheme to file.
-        /// </summary>
-        void SaveScheme(string filePath);
 
 #if DEBUG
         /// <summary>

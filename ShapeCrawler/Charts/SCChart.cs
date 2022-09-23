@@ -50,7 +50,7 @@ namespace ShapeCrawler.Charts
 
         public ChartType Type => this.chartType.Value;
 
-        public ShapeType ShapeType => ShapeType.Chart;
+        public SCShapeType ShapeType => SCShapeType.Chart;
 
         public string Title
         {
@@ -91,9 +91,9 @@ namespace ShapeCrawler.Charts
             }
         }
 
-        public override GeometryType GeometryType => GeometryType.Rectangle;
+        public override SCGeometry GeometryType => SCGeometry.Rectangle;
 
-        public byte[] WorkbookByteArray => this.ChartWorkbook.ByteArray;
+        public byte[] WorkbookByteArray => this.ChartWorkbook.BinaryData;
 
         public SpreadsheetDocument SDKSpreadsheetDocument => this.ChartWorkbook.spreadsheetDocument.Value;
 
@@ -148,7 +148,7 @@ namespace ShapeCrawler.Charts
 
             // PieChart uses only one series for view.
             // However, it can have store multiple series data in the spreadsheet.
-            if (Type == ChartType.PieChart)
+            if (this.Type == ChartType.PieChart)
             {
                 return ((SCSeriesCollection) this.SeriesCollection).First().Name;
             }
@@ -159,7 +159,7 @@ namespace ShapeCrawler.Charts
         private bool TryGetStaticTitle(C.ChartText chartText, out string staticTitle)
         {
             staticTitle = null;
-            if (Type == ChartType.Combination)
+            if (this.Type == ChartType.Combination)
             {
                 staticTitle = chartText.RichText.Descendants<A.Text>().Select(t => t.Text)
                     .Aggregate((t1, t2) => t1 + t2);
@@ -178,7 +178,7 @@ namespace ShapeCrawler.Charts
 
         private LibraryCollection<double> GetXValues()
         {
-            var sdkXValues = firstSeries.Value?.GetFirstChild<C.XValues>();
+            var sdkXValues = this.firstSeries.Value?.GetFirstChild<C.XValues>();
             if (sdkXValues?.NumberReference == null)
             {
                 return null;
@@ -192,7 +192,7 @@ namespace ShapeCrawler.Charts
 
         private OpenXmlElement GetFirstSeries()
         {
-            return cXCharts.First().ChildElements
+            return this.cXCharts.First().ChildElements
                 .FirstOrDefault(e => e.LocalName.Equals("ser", StringComparison.Ordinal));
         }
     }

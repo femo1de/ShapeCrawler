@@ -3,7 +3,6 @@ using ShapeCrawler.Collections;
 using ShapeCrawler.Shapes;
 
 // ReSharper disable CheckNamespace
-
 namespace ShapeCrawler
 {
     /// <summary>
@@ -14,7 +13,7 @@ namespace ShapeCrawler
         /// <summary>
         ///     Gets table columns.
         /// </summary>
-        IReadOnlyList<Column> Columns { get; }
+        IReadOnlyList<SCColumn> Columns { get; }
 
         /// <summary>
         ///     Gets table rows.

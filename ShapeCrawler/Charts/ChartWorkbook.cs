@@ -11,8 +11,8 @@ namespace ShapeCrawler.Charts
 {
     internal class ChartWorkbook // TODO: implement IDispose to correctly dispose _packagePartStream
     {
-        private readonly SCChart chart;
         internal readonly Lazy<SpreadsheetDocument> spreadsheetDocument;
+        private readonly SCChart chart;
         private readonly EmbeddedPackagePart embeddedPackagePart;
         private Stream? embeddedPackagePartStream;
         private bool closed;
@@ -26,7 +26,7 @@ namespace ShapeCrawler.Charts
 
         internal WorkbookPart WorkbookPart => this.spreadsheetDocument.Value.WorkbookPart;
 
-        internal byte[] ByteArray => this.GetByteArray();
+        internal byte[] BinaryData => this.GetByteArray();
 
         internal void Save()
         {

@@ -51,21 +51,6 @@ namespace ShapeCrawler.Tests
             hidden.Should().BeTrue();
         }
 
-
-        [Fact]
-        public void SaveScheme_CreatesAndSavesSlideSchemeImageInSpecifiedStream()
-        {
-            // Arrange
-            ISlide slide = this.fixture.Pre025.Slides[2];
-            var stream = new MemoryStream();
-
-            // Act
-            slide.SaveScheme(stream);
-
-            // Assert
-            stream.Length.Should().BeGreaterThan(0);
-        }
-
         [Fact]
         public async void Background_SetImage_updates_background()
         {
@@ -167,7 +152,7 @@ namespace ShapeCrawler.Tests
             var shapesCollection = presentation.Slides[0].Shapes;
 
             // Act-Assert
-            Assert.Contains(shapesCollection, shape => shape.Id == 10 && shape is IConnectionShape && shape.GeometryType == GeometryType.Line);
+            Assert.Contains(shapesCollection, shape => shape.Id == 10 && shape is IConnectionShape && shape.GeometryType == SCGeometry.Line);
         }
 
         [Theory]
@@ -303,6 +288,38 @@ namespace ShapeCrawler.Tests
             addedVideo.X.Should().Be(xPxCoordinate);
             addedVideo.Y.Should().Be(yPxCoordinate);
         }
+
+        [Fact]
+        public void Slide_GetAllTextboxes_contains_all_textboxes_withTable()
+        {
+            // Arrange
+            var preStream = TestFiles.Presentations.pre039_stream;
+            var presentation = SCPresentation.Open(preStream);
+            var targetSlide = presentation.Slides.First();
+
+            // Act
+            var textboxes = targetSlide.GetAllTextFrames();
+
+            // Assert
+            textboxes.Count.Should().Be(11);
+        }
+
+
+        [Fact]
+        public void Slide_GetAllTextboxes_contains_all_textboxes_withoutTable()
+        {
+            // Arrange
+            var preStream = TestFiles.Presentations.pre011_dt_stream;
+            var presentation = SCPresentation.Open(preStream);
+            var targetSlide = presentation.Slides.First();
+
+            // Act
+            var textboxes = targetSlide.GetAllTextFrames();
+
+            // Assert
+            textboxes.Count.Should().Be(4);
+        }
+
 
 #if TEST
         [Fact]

@@ -12,10 +12,10 @@ namespace ShapeCrawler.OLEObjects
         {
         }
 
-        public override IPlaceholder Placeholder => MasterPlaceholder.Create(PShapeTreesChild);
+        public override IPlaceholder Placeholder => MasterPlaceholder.Create(this.PShapeTreesChild);
 
         public override SCPresentation PresentationInternal { get; }
 
-        public ShapeType ShapeType => ShapeType.OLEObject;
+        public SCShapeType ShapeType => SCShapeType.OLEObject;
     }
 }

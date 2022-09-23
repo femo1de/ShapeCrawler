@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using ShapeCrawler.Extensions;
+using ShapeCrawler.Tables;
 using A = DocumentFormat.OpenXml.Drawing;
 using P = DocumentFormat.OpenXml.Presentation;
 
 // ReSharper disable PossibleMultipleEnumeration
-
 namespace ShapeCrawler.Collections
 {
     /// <summary>
@@ -16,30 +16,18 @@ namespace ShapeCrawler.Collections
     {
         #region Constructors
 
-        internal RowCollection(List<SCTableRow> rowList)
+        private RowCollection(List<SCTableRow> rowList)
         {
             this.CollectionItems = rowList;
         }
 
         #endregion Constructors
-
-        internal static RowCollection Create(SlideTable table, P.GraphicFrame pGraphicFrame)
-        {
-            IEnumerable<A.TableRow> aTableRows = pGraphicFrame.GetATable().Elements<A.TableRow>();
-            var rowList = new List<SCTableRow>(aTableRows.Count());
-            int rowIndex = 0;
-            rowList.AddRange(aTableRows.Select(aTblRow => new SCTableRow(table, aTblRow, rowIndex++)));
-
-            return new RowCollection(rowList);
-        }
-
-        #region Public Methods
-
+        
         /// <inheritdoc/>
-        public override void Remove(SCTableRow scTableRow)
+        public override void Remove(SCTableRow tableRow)
         {
-            scTableRow.ATableRow.Remove();
-            this.CollectionItems.Remove(scTableRow);
+            tableRow.ATableRow.Remove();
+            this.CollectionItems.Remove(tableRow);
         }
 
         /// <summary>
@@ -55,7 +43,15 @@ namespace ShapeCrawler.Collections
             var innerRow = this.CollectionItems[index];
             this.Remove(innerRow);
         }
+        
+        internal static RowCollection Create(SlideTable table, P.GraphicFrame pGraphicFrame)
+        {
+            IEnumerable<A.TableRow> aTableRows = pGraphicFrame.GetATable().Elements<A.TableRow>();
+            var rowList = new List<SCTableRow>(aTableRows.Count());
+            int rowIndex = 0;
+            rowList.AddRange(aTableRows.Select(aTblRow => new SCTableRow(table, aTblRow, rowIndex++)));
 
-        #endregion Public Methods
+            return new RowCollection(rowList);
+        }
     }
 }

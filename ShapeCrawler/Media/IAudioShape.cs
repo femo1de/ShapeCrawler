@@ -17,6 +17,9 @@ namespace ShapeCrawler
         /// </summary>
         public byte[] BinaryData { get; }
 
+        /// <summary>
+        ///     Gets MIME type.
+        /// </summary>
         string MIME { get; }
     }
 
@@ -27,6 +30,6 @@ namespace ShapeCrawler
         {
         }
 
-        public ShapeType ShapeType => ShapeType.AudioShape;
+        public SCShapeType ShapeType => SCShapeType.AudioShape;
     }
 }

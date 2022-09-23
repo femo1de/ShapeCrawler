@@ -12,8 +12,8 @@ using DocumentFormat.OpenXml.Presentation;
 using ShapeCrawler.AutoShapes;
 using ShapeCrawler.Collections;
 using ShapeCrawler.Exceptions;
-using ShapeCrawler.Factories;
 using ShapeCrawler.Services;
+using ShapeCrawler.Shapes;
 using ShapeCrawler.Shared;
 using ShapeCrawler.SlideMasters;
 using ShapeCrawler.Statics;
@@ -27,33 +27,29 @@ namespace ShapeCrawler
     /// </summary>
     internal class SCSlide : SlideBase, ISlide, IPresentationComponent
     {
+        internal readonly SlideId slideId;
         private readonly Lazy<SCImage> backgroundImage;
-        private readonly Lazy<IList<ITextBox>> textboxes;
         private Lazy<CustomXmlPart> customXmlPart;
-        internal readonly SlideId SlideId;
-        
+        private ResettableLazy<ShapeCollection> shapes;
+
         internal SCSlide(SCPresentation parentPresentation, SlidePart slidePart, SlideId slideId)
         {
             this.PresentationInternal = parentPresentation;
-            this.ParentPresentation = parentPresentation;
+            this.Presentation = parentPresentation;
             this.SDKSlidePart = slidePart;
             this.shapes = new ResettableLazy<ShapeCollection>(() => ShapeCollection.ForSlide(this.SDKSlidePart, this));
             this.backgroundImage = new Lazy<SCImage>(() => SCImage.ForBackground(this));
             this.customXmlPart = new Lazy<CustomXmlPart>(this.GetSldCustomXmlPart);
-            this.textboxes = new Lazy<IList<ITextBox>>(this.GetTextBoxes);
-            this.SlideId = slideId;
+            this.slideId = slideId;
         }
-
-        internal SCSlideLayout SlideLayoutInternal => (SCSlideLayout)this.SlideLayout;
 
         public ISlideLayout SlideLayout => ((SlideMasterCollection)this.PresentationInternal.SlideMasters).GetSlideLayoutBySlide(this);
 
         public IShapeCollection Shapes => this.shapes.Value;
-        
-        public override bool IsRemoved { get; set; }
 
-        internal override TypedOpenXmlPart TypedOpenXmlPart => this.SDKSlidePart;
+        public override bool IsRemoved { get; set; }
         
+
         public int Number
         {
             get => this.GetNumber();
@@ -70,23 +66,15 @@ namespace ShapeCrawler
 
         public bool Hidden => this.SDKSlidePart.Slide.Show != null && this.SDKSlidePart.Slide.Show.Value == false;
 
-        public IPresentation ParentPresentation { get; }
+        public IPresentation Presentation { get; }
 
         public SlidePart SDKSlidePart { get; }
-        
+
         public SCPresentation PresentationInternal { get; }
+        
+        internal SCSlideLayout SlideLayoutInternal => (SCSlideLayout)this.SlideLayout;
 
-        private ResettableLazy<ShapeCollection> shapes { get; }
-
-        public IList<ITextBox> Textboxes => this.textboxes.Value;
-
-        /// <summary>
-        ///     Saves slide scheme in PNG file.
-        /// </summary>
-        public void SaveScheme(string filePath)
-        {
-            SlideSchemeService.SaveScheme(this.shapes.Value, this.PresentationInternal.SlideWidth, this.PresentationInternal.SlideHeight, filePath);
-        }
+        internal override TypedOpenXmlPart TypedOpenXmlPart => this.SDKSlidePart;
 
         public override void ThrowIfRemoved()
         {
@@ -94,10 +82,10 @@ namespace ShapeCrawler
             {
                 throw new ElementIsRemovedException("Slide was removed");
             }
-            
+
             this.PresentationInternal.ThrowIfClosed();
         }
-        
+
         public async Task<string> ToHtml()
         {
             var slideWidthPx = this.PresentationInternal.SlideWidth;
@@ -123,14 +111,6 @@ namespace ShapeCrawler
             return document.DocumentElement.OuterHtml;
         }
 
-        /// <summary>
-        ///     Saves slide scheme in stream.
-        /// </summary>
-        public void SaveScheme(Stream stream)
-        {
-            SlideSchemeService.SaveScheme(this.shapes.Value, this.PresentationInternal.SlideWidth, this.PresentationInternal.SlideHeight, stream);
-        }
-
         public void Hide()
         {
             if (this.SDKSlidePart.Slide.Show == null)
@@ -144,9 +124,66 @@ namespace ShapeCrawler
             }
         }
 
+        public IList<ITextFrame> GetAllTextFrames()
+        {
+            List<ITextFrame> returnList = new List<ITextFrame>();
+
+            // this will add all textboxes from shapes on that slide that directly inherit ITextBoxContainer
+            returnList.AddRange(this.Shapes.OfType<ITextFrameContainer>()
+                .Where(t => t.TextFrame != null)
+                .Select(t => t.TextFrame)
+                .ToList());
+
+            // if this slide contains a table, the cells from that table will have to be added as well, since they inherit from ITextBoxContainer but are not direct descendants of the slide
+            var tablesOnSlide = this.Shapes.OfType<ITable>().ToList();
+            if (tablesOnSlide.Any())
+            {
+                returnList.AddRange(tablesOnSlide.SelectMany(table => table.Rows.SelectMany(row => row.Cells).Select(cell => cell.TextFrame)));
+            }
+
+            // if there are groups on that slide, they need to be added as well since those are not direct descendants of the slide either
+            var groupsOnSlide = this.Shapes.OfType<IGroupShape>().ToList();
+            if (groupsOnSlide.Any())
+            {
+                foreach (var group in groupsOnSlide)
+                {
+                    this.AddAllTextboxesInGroupToList(group, returnList);
+                }
+            }
+
+            return returnList;
+        }
+
+        /// <summary>
+        /// recursively iterate through a group and add all textboxes in that group to a list.
+        /// </summary>
+        /// <param name="group"></param>
+        /// <param name="textBoxes"></param>
+        private void AddAllTextboxesInGroupToList(IGroupShape group, List<ITextFrame> textBoxes)
+        {
+            foreach (var shape in group.Shapes)
+            {
+                switch (shape.ShapeType)
+                {
+                    case SCShapeType.GroupShape:
+                        this.AddAllTextboxesInGroupToList((IGroupShape)shape, textBoxes);
+                        break;
+                    case SCShapeType.AutoShape:
+                        if (shape is ITextFrameContainer)
+                        {
+                            textBoxes.Add(((ITextFrameContainer)shape).TextFrame);
+                        }
+
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
         private int GetNumber()
         {
-            var presentationPart = this.PresentationInternal.sdkPresentation.PresentationPart;
+            var presentationPart = this.PresentationInternal.SdkPresentation.PresentationPart;
             string currentSlidePartId = presentationPart.GetIdOfPart(this.SDKSlidePart);
             List<SlideId> slideIdList = presentationPart.Presentation.SlideIdList.ChildElements.OfType<SlideId>().ToList();
             for (int i = 0; i < slideIdList.Count; i++)
@@ -170,7 +207,7 @@ namespace ShapeCrawler
                 throw new ArgumentOutOfRangeException(nameof(to));
             }
 
-            PresentationPart presentationPart = this.PresentationInternal.sdkPresentation.PresentationPart;
+            PresentationPart presentationPart = this.PresentationInternal.SdkPresentation.PresentationPart;
 
             Presentation presentation = presentationPart.Presentation;
             SlideIdList slideIdList = presentation.SlideIdList;
@@ -203,7 +240,7 @@ namespace ShapeCrawler
             // Save the modified presentation.
             presentation.Save();
         }
-        
+
         private string GetCustomData()
         {
             if (this.customXmlPart.Value == null)
@@ -257,23 +294,6 @@ namespace ShapeCrawler
             }
 
             return null;
-        }
-
-        private IList<ITextBox> GetTextBoxes()
-        {
-            List<ITextBox> returnList = new List<ITextBox>();
-
-            // this will add all textboxes from shapes on that slide that directly inherit ITextBoxContainer
-            returnList.AddRange(this.Shapes.OfType<ITextBoxContainer>().Where(t => t.TextBox != null).Select(t => t.TextBox).ToList());
-
-            // if this slide contains a table, the cells from that table will have to be added as well, since they inherit from ITextBoxContainer but are not direct descendants of the slide
-            var tablesOnSlide = this.Shapes.OfType<ITable>().ToList();
-            if (tablesOnSlide.Any())
-            {
-                returnList.AddRange(tablesOnSlide.SelectMany(table => table.Rows.SelectMany(row => row.Cells).Select(cell => cell.TextBox)));
-            }
-
-            return returnList;
         }
     }
 }

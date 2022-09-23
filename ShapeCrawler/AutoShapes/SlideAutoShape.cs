@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using DocumentFormat.OpenXml.Drawing;
 using ShapeCrawler.AutoShapes;
@@ -14,30 +15,30 @@ namespace ShapeCrawler
     /// <summary>
     ///     Represents AutoShape located on Slide.
     /// </summary>
-    internal class SlideAutoShape : SlideShape, IAutoShape, ITextBoxContainer
+    internal class SlideAutoShape : SlideShape, IAutoShape, ITextFrameContainer
     {
         private readonly Lazy<ShapeFill> shapeFill;
-        private readonly Lazy<SCTextBox?> textBox;
+        private readonly Lazy<TextFrame?> textFrame;
         private readonly P.Shape pShape;
 
 
         internal SlideAutoShape(P.Shape pShape, SCSlide slideInternal, SlideGroupShape groupShape)
             : base(pShape, slideInternal, groupShape)
         {
-            this.textBox = new Lazy<SCTextBox?>(this.GetTextBox);
+            this.textFrame = new Lazy<TextFrame?>(this.GetTextBox);
             this.shapeFill = new Lazy<ShapeFill>(this.GetFill);
             this.pShape = pShape;
         }
 
         #region Public Properties
 
-        public ITextBox TextBox => this.textBox.Value;
-
         public IShapeFill Fill => this.shapeFill.Value;
 
         public IShape Shape => this; // TODO: should be internal?
+
+        public SCShapeType ShapeType => SCShapeType.AutoShape;
         
-        public ShapeType ShapeType => ShapeType.AutoShape;
+        public ITextFrame? TextFrame => this.textFrame.Value;
 
         #endregion Public Properties
 
@@ -51,21 +52,11 @@ namespace ShapeCrawler
             }
         }
 
-        private SCTextBox GetTextBox()
+        private TextFrame? GetTextBox()
         {
             var pTextBody = this.PShapeTreesChild.GetFirstChild<P.TextBody>();
-            if (pTextBody == null)
-            {
-                return new SCTextBox(this);
-            }
-
-            var aTexts = pTextBody.Descendants<A.Text>();
-            if (aTexts.Sum(t => t.Text.Length) > 0)
-            {
-                return new SCTextBox( this, pTextBody);
-            }
-
-            return null;
+            var canChangeTextFrame = this.Placeholder is { Type: PlaceholderType.Title } or null;
+            return pTextBody == null ? null : new TextFrame(this, pTextBody, canChangeTextFrame);
         }
 
         private ShapeFill GetFill() // TODO: duplicate of LayoutAutoShape.TryGetFill()
