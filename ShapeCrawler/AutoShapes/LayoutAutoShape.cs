@@ -47,6 +47,11 @@ namespace ShapeCrawler
 
         private Dictionary<int, FontData> LvlToFontData => this.lvlToFontData.Value;
 
+        public void SetShapeFillToSolidColor(string hexColorValue)
+        {
+            throw new NotImplementedException();
+        }
+
         public void FillFontData(int paragraphLvl, ref FontData fontData)
         {
             // Tries get font from Auto Shape
@@ -117,9 +122,5 @@ namespace ShapeCrawler
             throw new NotImplementedException();
         }
 
-        public void SetShapeFillToSolidColor(string hexColorValue)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
