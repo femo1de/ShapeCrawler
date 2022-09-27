@@ -74,6 +74,11 @@ namespace ShapeCrawler
             }
         }
 
+        public void SetShapeFillToSolidColor(string hexColorValue)
+        {
+            throw new NotImplementedException();
+        }
+
         private Dictionary<int, FontData> GetLvlToFontData()
         {
             Dictionary<int, FontData> lvlToFontData = FontDataParser.FromCompositeElement(this.pShape.TextBody.ListStyle);

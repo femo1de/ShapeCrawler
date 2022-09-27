@@ -1,4 +1,5 @@
-﻿using ShapeCrawler.Drawing;
+﻿
+using ShapeCrawler.Drawing;
 using ShapeCrawler.Shapes;
 
 // ReSharper disable once CheckNamespace
@@ -18,5 +19,7 @@ namespace ShapeCrawler
         ///     Gets text frame if the type of AutoShape is text holder, otherwise <see langword="null"/>.
         /// </summary>
         ITextFrame? TextFrame { get; }
+
+        void SetShapeFillToSolidColor(string hexColorValue);
     }
 }
