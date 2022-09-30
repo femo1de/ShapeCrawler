@@ -73,6 +73,11 @@ internal class MasterAutoShape : MasterShape, IAutoShape, ITextFrameContainer, I
         }
     }
 
+        public void SetShapeFillToSolidColor(string hexColorValue)
+        {
+            throw new NotImplementedException();
+        }
+
     private Dictionary<int, FontData> GetLvlToFontData() // TODO: duplicate code in LayoutAutoShape
     {
         Dictionary<int, FontData> lvlToFontData = FontDataParser.FromCompositeElement(this.pShape.TextBody.ListStyle);
